@@ -62,13 +62,9 @@
 # 首次安装或升级到新版本：按标签定位附件
 dsh plugin --profile desktop add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
 
-# 不想手写版本号时，先取最新标签再拼地址
-$tag = gh release view --repo TZDXF/dsh-wait-minute --json tagName -q .tagName
-dsh plugin --profile desktop add "https://github.com/TZDXF/dsh-wait-minute/releases/download/$tag/dsh-wait-minute-$($tag.TrimStart('v')).tgz"
-
-# 重复安装或回退同一版本：改用已下载的本地附件，可反复执行
-gh release download v1.0.2 --repo TZDXF/dsh-wait-minute --pattern '*.tgz' --dir "$env:TEMP\dsh-wait-minute" --clobber
-dsh plugin --profile desktop add "file:$env:TEMP\dsh-wait-minute\dsh-wait-minute-1.0.2.tgz"
+# 重复安装或回退同一版本：先下载附件，再按本地文件安装（可反复执行）
+Invoke-WebRequest -Uri https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz -OutFile "$env:TEMP\dsh-wait-minute-1.0.2.tgz"
+dsh plugin --profile desktop add "file:$env:TEMP\dsh-wait-minute-1.0.2.tgz"
 
 # 开发调试：直接从项目目录安装（link）
 dsh plugin --profile desktop add C:\code\wait-minute

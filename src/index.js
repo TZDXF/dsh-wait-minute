@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { API_PATH, createRequest, requireString } from './domain.js';
 import { openCreatedSessions } from './created-sessions.js';
 import { openOutbox } from './outbox.js';
@@ -7,11 +8,13 @@ export const name = 'wait-minute';
 // The hub alone does not guarantee that its JSON backend has registered.
 export const inject = ['webServer', 'connection', 'storage', 'storage.backend.json', 'sessionController', 'sessionTitle', 'sessions', 'llm', 'agentDefaultModel'];
 export const HEALTH_PATH = '/.well-known/wait-minute';
+// 运行版本号唯一来源是 package.json：发布流程只改包版本，接口标识不会与之脱节。
+export const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const MAX_BODY_BYTES = 48 * 1024;
 
 function send(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store',
-    'X-Wait-Minute-Engine': 'standalone-outbox-v1', 'X-Wait-Minute-Version': '1.0.0' });
+    'X-Wait-Minute-Engine': 'standalone-outbox-v1', 'X-Wait-Minute-Version': VERSION });
   res.end(JSON.stringify(body));
 }
 
@@ -70,7 +73,7 @@ export function createHandler(ctx, outbox, createdSessions) {
 // Installed after both storage units successfully open, so it confirms real startup.
 export function healthHandler(req, res) {
   if (req.method !== 'GET') return send(res, 405, { error: '仅支持 GET' });
-  return send(res, 200, { engine: 'standalone-outbox-v1', version: '1.0.0', ready: true });
+  return send(res, 200, { engine: 'standalone-outbox-v1', version: VERSION, ready: true });
 }
 
 export async function apply(ctx) {

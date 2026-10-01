@@ -1,6 +1,6 @@
 {
   "name": "dsh-wait-minute",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DSH 延迟发送消息：设置小时和分钟，持久化定时投递到当前会话",
   "type": "module",
   "license": "MIT",

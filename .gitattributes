@@ -1,0 +1,11 @@
+# 统一使用 LF，避免 Windows 工作区把 CRLF 带进发布的安装包。
+* text=auto eol=lf
+
+# 二进制文件不做换行转换。
+*.tgz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary

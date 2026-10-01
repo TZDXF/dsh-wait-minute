@@ -1,0 +1,72 @@
+# 手动打包：在打标签之前验证安装包是否可用，不创建任何 Release。
+# 在 Actions 页面选择本工作流并运行；也可用打包脚本在本机执行同样的命令。
+name: Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build and pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies when a lockfile exists
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "未发现 package-lock.json：本插件没有运行时依赖，跳过安装。"
+          fi
+
+      # test/plugin.test.mjs 会读取 lib/client.js，因此必须先构建再测试。
+      - name: Build client bundle
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Pack installation package
+        id: pack
+        run: |
+          set -eo pipefail
+          rm -rf dist
+          mkdir -p dist
+          version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json','utf8')).version")"
+          npm pack --pack-destination dist
+          packs=(dist/*.tgz)
+          if [ "${#packs[@]}" -ne 1 ]; then
+            echo "::error::预期只生成一个 tgz，实际 ${#packs[@]} 个。"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tarball=$(basename "${packs[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload installation package
+        uses: actions/upload-artifact@v7
+        with:
+          name: dsh-wait-minute-${{ steps.pack.outputs.version }}-manual
+          path: dist/*.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Write job summary
+        run: |
+          {
+            echo "## 手动打包 ${{ steps.pack.outputs.version }}"
+            echo ""
+            echo "安装包：\`${{ steps.pack.outputs.tarball }}\`（未创建 Release）"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -86,3 +86,12 @@ node --test test/*.test.mjs
 ```
 
 126 项自动测试覆盖独立队列不访问 Schedule、原文发送、到期/立即发送竞争去重、编辑时刻、取消、持久化故障、重启恢复、会话隔离、内联编辑、分段时间、原生队列式折叠与行操作、侧栏状态汇总及过期响应保护、即时标题与后台生成/超时/改名保护。测试使用模拟存储、时钟、消息接收接口和 UI 事件，不等同于真实浏览器点击与实际模型执行的完整端到端测试。
+
+## 发布与自动化
+
+- [ci.yml](.github/workflows/ci.yml)：分支推送与 PR 上构建客户端 bundle 并运行测试（Node 22 与 24）。
+- [release.yml](.github/workflows/release.yml)：推送 `v*` 版本标签时校验标签与 `package.json` 版本一致，再构建、测试、打包 `dsh-wait-minute-<版本>.tgz`，上传构建产物并创建 GitHub Release。
+- [package.yml](.github/workflows/package.yml)：手动触发，只打包并上传 tgz，用于打标签前验证安装包。
+- Release 附件即安装包；发布说明取自标签对应提交的 [RELEASENOTES.md](RELEASENOTES.md)，自动生成的提交列表追加在其后。
+
+标签与 `package.json` 的 `version` 必须一致（`v1.4.0` ↔ `1.4.0`），标签提交还必须位于 `master` 历史中；否则发布在构建前失败，且不产生 Release。完整步骤、版本号规则与失败处理见 [.github/RELEASE.md](.github/RELEASE.md)。

@@ -1,0 +1,130 @@
+# 发布流程：推送 v* 版本标签时构建客户端 bundle、运行测试、打包 tgz 并创建 GitHub Release。
+# 版本号唯一来源是 package.json；标签必须与之一致，由 .github/scripts/verify-release.mjs 在构建前校验。
+# Release 正文取自该标签对应提交里的 RELEASENOTES.md，GitHub 自动生成的提交列表会追加在其后。
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# 只申请创建 Release 所需的写权限，其余保持只读。
+permissions:
+  contents: write
+
+# 同一个标签不并发发布，也不中途取消，避免留下半个 Release。
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, test and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@v7
+        with:
+          # 需要完整历史，用于确认标签提交已包含在默认分支中。
+          fetch-depth: 0
+          # 发布步骤通过 GH_TOKEN 环境变量认证，不把凭据写入 git 配置。
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # 打标签前先失败：版本不一致时完全不产生 Release。
+      - name: Verify version tag
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_BASE_BRANCH: master
+        run: node .github/scripts/verify-release.mjs
+
+      - name: Install dependencies when a lockfile exists
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "未发现 package-lock.json：本插件没有运行时依赖，跳过安装。"
+          fi
+
+      # test/plugin.test.mjs 会读取 lib/client.js，因此必须先构建再测试。
+      - name: Build client bundle
+        run: npm run build
+
+      - name: Check build output
+        run: |
+          if [ ! -f lib/client.js ]; then
+            echo "::error::lib/client.js 未生成，安装包会缺少客户端界面。"
+            exit 1
+          fi
+          echo "lib/client.js 已生成，$(wc -c < lib/client.js) 字节。"
+
+      - name: Run tests
+        run: npm test
+
+      - name: Pack installation package
+        run: |
+          set -eo pipefail
+          rm -rf dist
+          mkdir -p dist
+          npm pack --pack-destination dist
+          packs=(dist/*.tgz)
+          if [ "${#packs[@]}" -ne 1 ]; then
+            echo "::error::预期只生成一个 tgz，实际 ${#packs[@]} 个。"
+            exit 1
+          fi
+          actual="$(basename "${packs[0]}")"
+          expected="${{ steps.version.outputs.tarball }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::安装包名称 $actual 与预期 $expected 不一致。"
+            exit 1
+          fi
+          echo "已打包 $actual，$(wc -c < "${packs[0]}") 字节。"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.version.outputs.tarball }}
+          path: dist/*.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eo pipefail
+          tag="${{ github.ref_name }}"
+          prerelease_flag=()
+          # 版本号带预发布后缀（例如 v1.4.0-beta.1）时发布为 prerelease。
+          case "$tag" in
+            *-*) prerelease_flag=(--prerelease) ;;
+          esac
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::warning::$tag 的 Release 已存在，改为覆盖附件后退出。"
+            gh release upload "$tag" dist/*.tgz --clobber
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file RELEASENOTES.md \
+              --generate-notes \
+              --verify-tag \
+              "${prerelease_flag[@]}" \
+              dist/*.tgz
+          fi
+
+      - name: Write job summary
+        run: |
+          {
+            echo "## Release ${{ github.ref_name }}"
+            echo ""
+            echo "- 安装包：\`${{ steps.version.outputs.tarball }}\`"
+            echo "- 标签提交：\`${{ github.sha }}\`"
+            echo "- Release：${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          } >> "$GITHUB_STEP_SUMMARY"

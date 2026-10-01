@@ -1,0 +1,60 @@
+# 日常质量门禁：分支推送与 PR 上构建客户端 bundle 并运行测试。
+# 标签发布不走这里，由 release.yml 独立执行同样的构建与测试步骤。
+name: CI
+
+on:
+  push:
+    # 只匹配分支；标签推送由 release.yml 负责。
+    branches:
+      - '**'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies when a lockfile exists
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "未发现 package-lock.json：本插件没有运行时依赖，跳过安装。"
+          fi
+
+      # test/plugin.test.mjs 会读取 lib/client.js，因此必须先构建再测试。
+      - name: Build client bundle
+        run: npm run build
+
+      - name: Check build output
+        run: |
+          if [ ! -f lib/client.js ]; then
+            echo "::error::lib/client.js 未生成。"
+            exit 1
+          fi
+          echo "lib/client.js 已生成，$(wc -c < lib/client.js) 字节。"
+
+      - name: Run tests
+        run: npm test

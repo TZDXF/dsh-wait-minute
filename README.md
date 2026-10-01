@@ -94,4 +94,4 @@ node --test test/*.test.mjs
 - [package.yml](.github/workflows/package.yml)：手动触发，只打包并上传 tgz，用于打标签前验证安装包。
 - Release 附件即安装包；发布说明取自标签对应提交的 [RELEASENOTES.md](RELEASENOTES.md)，自动生成的提交列表追加在其后。
 
-标签与 `package.json` 的 `version` 必须一致（`v1.4.0` ↔ `1.4.0`），标签提交还必须位于 `master` 历史中；否则发布在构建前失败，且不产生 Release。完整步骤、版本号规则与失败处理见 [.github/RELEASE.md](.github/RELEASE.md)。
+标签与 `package.json` 的 `version` 必须一致（`v1.0.0` ↔ `1.0.0`），标签提交还必须位于 `master` 历史中；否则发布在构建前失败，且不产生 Release。完整步骤、版本号规则与失败处理见 [.github/RELEASE.md](.github/RELEASE.md)。

@@ -3,8 +3,8 @@
 // 只读取环境变量、package.json 和 git 历史，不修改仓库内容。
 //
 // 环境变量：
-//   RELEASE_TAG         github.ref_name，例如 v1.4.0
-//   RELEASE_REF         github.ref，例如 refs/tags/v1.4.0
+//   RELEASE_TAG         github.ref_name，例如 v1.0.0
+//   RELEASE_REF         github.ref，例如 refs/tags/v1.0.0
 //   RELEASE_BASE_BRANCH 默认分支名，默认 master
 //   GITHUB_OUTPUT       Actions 输出文件；本地运行可省略
 // 输出：version / tag / tarball 三个 output。
@@ -29,7 +29,7 @@ if (!ref) fail('缺少 RELEASE_REF（应为 github.ref），无法确认触发�
 // 只接受 v<major>.<minor>.<patch>，可带预发布或构建后缀。
 const TAG_PATTERN = /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 if (!TAG_PATTERN.test(tag)) {
-  fail(`标签 ${tag} 不是版本标签：请使用 v1.4.0 或 v1.4.0-beta.1 这类形式。`);
+  fail(`标签 ${tag} 不是版本标签：请使用 v1.0.0 或 v1.0.0-beta.1 这类形式。`);
 }
 
 const version = tag.slice(1);

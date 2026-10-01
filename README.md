@@ -56,22 +56,27 @@
 
 ### 通过 dsh 命令安装
 
-`dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`update`、`store prune` 都可用；桌面版默认配置名为 `desktop`，配置目录为 `%USERPROFILE%\.dsh\profiles\desktop`。
+`dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`why` 都可用；桌面版配置名固定为 `desktop`，配置目录为 `%USERPROFILE%\.dsh\profiles\desktop`。
 
 ```powershell
-# 安装或更新到已发布版本，附件地址即安装包
+# 首次安装或升级到新版本：每个版本一个地址，首次解析会真正下载
 dsh plugin --profile desktop add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
 
-# 开发调试：从本地项目目录或本地 tarball 安装
+# 重复安装或回退同一版本：改用已下载的本地附件，可反复执行
+gh release download v1.0.2 --repo TZDXF/dsh-wait-minute --pattern '*.tgz' --dir "$env:TEMP\dsh-wait-minute" --clobber
+dsh plugin --profile desktop add "file:$env:TEMP\dsh-wait-minute\dsh-wait-minute-1.0.2.tgz"
+
+# 开发调试：直接从项目目录安装（link）
 dsh plugin --profile desktop add C:\code\wait-minute
-dsh plugin --profile desktop add file:C:/code/wait-minute/dist/dsh-wait-minute-1.0.2.tgz
 
 # 查看当前安装来源与版本，以及卸载
 dsh plugin --profile desktop why dsh-wait-minute
 dsh plugin --profile desktop remove dsh-wait-minute
 ```
 
-安装或更新后必须完全退出并重新打开 DSH，插件页显示的版本号不代表运行时已重新导入新代码。若 pnpm 报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`（本地 store 中该 tarball 地址留有缺少 integrity 的解析记录），先执行 `dsh plugin --profile desktop store prune`，再重新执行 `add`。
+安装或更新后必须完全退出并重新打开 DSH，插件页显示的版本号不代表运行时已重新导入新代码。已经装好的配置只需 `dsh plugin --profile desktop install` 核对，正常输出 `Already up to date`。
+
+> **已知问题：同一附件地址不能安装第二次。** pnpm 11.7.0 在附件已进入本地 store 缓存时（输出里的 `reused 1, downloaded 0`）会生成不带 `integrity` 的解析结果，随后报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`。首次安装与升级到新版本不受影响（新地址必然重新下载）；只有重复安装同一版本地址会失败——`--force` 和 `store prune` 都绕不过去，`pnpm store prune` 会保留仍被配置引用的条目。需要重复安装或回退时请用上面的本地附件方式。
 
 ## 持久化及失败行为
 

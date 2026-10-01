@@ -59,8 +59,12 @@
 `dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`why` 都可用；桌面版配置名固定为 `desktop`，配置目录为 `%USERPROFILE%\.dsh\profiles\desktop`。
 
 ```powershell
-# 首次安装或升级到新版本：每个版本一个地址，首次解析会真正下载
+# 首次安装或升级到新版本：按标签定位附件
 dsh plugin --profile desktop add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
+
+# 不想手写版本号时，先取最新标签再拼地址
+$tag = gh release view --repo TZDXF/dsh-wait-minute --json tagName -q .tagName
+dsh plugin --profile desktop add "https://github.com/TZDXF/dsh-wait-minute/releases/download/$tag/dsh-wait-minute-$($tag.TrimStart('v')).tgz"
 
 # 重复安装或回退同一版本：改用已下载的本地附件，可反复执行
 gh release download v1.0.2 --repo TZDXF/dsh-wait-minute --pattern '*.tgz' --dir "$env:TEMP\dsh-wait-minute" --clobber
@@ -76,7 +80,9 @@ dsh plugin --profile desktop remove dsh-wait-minute
 
 安装或更新后必须完全退出并重新打开 DSH，插件页显示的版本号不代表运行时已重新导入新代码。已经装好的配置只需 `dsh plugin --profile desktop install` 核对，正常输出 `Already up to date`。
 
-> **已知问题：同一附件地址不能安装第二次。** pnpm 11.7.0 在附件已进入本地 store 缓存时（输出里的 `reused 1, downloaded 0`）会生成不带 `integrity` 的解析结果，随后报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`。首次安装与升级到新版本不受影响（新地址必然重新下载）；只有重复安装同一版本地址会失败——`--force` 和 `store prune` 都绕不过去，`pnpm store prune` 会保留仍被配置引用的条目。需要重复安装或回退时请用上面的本地附件方式。
+**地址必须带版本标签，不要写成 `releases/latest/download/...`。** 附件文件名含版本号，`latest` 只在「文件名里的版本恰好就是当前最新版」时可用：本仓库现在 `latest/download/dsh-wait-minute-1.0.2.tgz` 返回 200，而 `latest/download/dsh-wait-minute-1.0.1.tgz` 直接 `ERR_PNPM_FETCH_404`。一旦发布 v1.0.3，任何写死 `latest/...1.0.2.tgz` 的命令都会失效；而没有版本号的固定地址又永远命中同一 specifier，`add`/`update` 都只回 `Already up to date`，无法升级。按标签取地址则两者都成立。
+
+> **已知问题：缓存的附件地址无法被重新解析。** pnpm 11.7.0 在该地址已进入本地 store 缓存时（输出里的 `reused 1, downloaded 0`）会产出不带 `integrity` 的解析结果，随后报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`；`--force`、`store prune` 都无效（`pnpm store prune` 保留仍被配置引用的条目）。触发条件是**当前配置需要全新解析一个已缓存的地址**：全新配置装同一版本、或 `remove` 后再 `add` 都会失败，而已装好的配置重复执行 `add`/`install` 会先命中 `Already up to date`、不受影响。升级到新版本是全新地址，必然真正下载，因此始终正常。受影响的场景请用上面的本地附件方式。
 
 ## 持久化及失败行为
 

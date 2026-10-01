@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Generated client bundle and installation packages
+/lib/
+/dist/
+
+# Extracted runtime references and local diagnostics
+/.ref/
+
+# Test and build output
+coverage/
+*.tsbuildinfo
+*.log
+
+# Local secrets (keep shareable examples)
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

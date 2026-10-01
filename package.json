@@ -1,0 +1,14 @@
+{
+  "name": "dsh-wait-minute",
+  "version": "1.0.0",
+  "description": "DSH 延迟发送消息：设置小时和分钟，持久化定时投递到当前会话",
+  "type": "module",
+  "license": "MIT",
+  "main": "src/index.js",
+  "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json", "./cordis.patch.yml": "./cordis.patch.yml" },
+  "files": ["src/", "lib/", "cordis.patch.yml", "README.md"],
+  "scripts": { "build": "node scripts/build.mjs", "test": "node --test test/*.test.mjs" },
+  "peerDependencies": { "@deepseek-ai/dsh": "0.2.0-rc.2" },
+  "peerDependenciesMeta": { "@deepseek-ai/dsh": { "optional": true } },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-ui-renderer", "@deepseek-ai/dsh-client-ui-session"] } }
+}

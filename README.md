@@ -54,6 +54,25 @@
 
 启动成功后，`GET /.well-known/wait-minute` 返回只读的引擎、运行版本和 `ready: true`，不包含消息、会话、令牌或其他私有信息。该端点在两个存储单元成功打开后才注册，可用于真实启动核验。私有 `/api` 请求会先被统一身份认证拦截，未经认证的 401 不能证明某条路由存在或后端版本已更新。
 
+### 通过 dsh 命令安装
+
+`dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`update`、`store prune` 都可用；桌面版默认配置名为 `desktop`，配置目录为 `%USERPROFILE%\.dsh\profiles\desktop`。
+
+```powershell
+# 安装或更新到已发布版本，附件地址即安装包
+dsh plugin --profile desktop add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
+
+# 开发调试：从本地项目目录或本地 tarball 安装
+dsh plugin --profile desktop add C:\code\wait-minute
+dsh plugin --profile desktop add file:C:/code/wait-minute/dist/dsh-wait-minute-1.0.2.tgz
+
+# 查看当前安装来源与版本，以及卸载
+dsh plugin --profile desktop why dsh-wait-minute
+dsh plugin --profile desktop remove dsh-wait-minute
+```
+
+安装或更新后必须完全退出并重新打开 DSH，插件页显示的版本号不代表运行时已重新导入新代码。若 pnpm 报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`（本地 store 中该 tarball 地址留有缺少 integrity 的解析记录），先执行 `dsh plugin --profile desktop store prune`，再重新执行 `add`。
+
 ## 持久化及失败行为
 
 - 消息位于 Storage kv 独立单元 `wait_minute_outbox`，会话创建记录位于 `wait_minute_created_sessions`，不出现在自动化任务管理中。

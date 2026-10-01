@@ -42,7 +42,12 @@
 
 ## 安装
 
-适用于已检查的 **DSH 0.2.0-rc.2**，**不再依赖 Schedule bundle**。
+适用于已检查的 **DSH 0.2.0-rc.2**，**不再依赖 Schedule bundle**。同时支持两种运行形态，二者插件完全一致，只是配置互相独立：
+
+- **桌面应用**：配置名 `desktop`，目录 `%USERPROFILE%\.dsh\profiles\desktop`。
+- **浏览器版**（`dsh web`）：配置名 `web`，目录 `%USERPROFILE%\.dsh\profiles\web`。
+
+插件服务端只用 `webServer` 与 `connection`，没有桌面专属依赖；客户端依赖 `dsh-client-ui-conversation`、`dsh-client-ui-renderer`、`dsh-client-ui-session`，三者都由 `@deepseek-ai/dsh-web-app` 提供。因此**装到哪个配置就在哪个形态生效**：只装 `desktop` 时 `dsh web` 里不会出现延迟功能，反之亦然。
 
 ### 1.0.0：实际运行实现校验
 
@@ -56,15 +61,16 @@
 
 ### 通过 dsh 命令安装
 
-`dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`why` 都可用；桌面版配置名固定为 `desktop`，配置目录为 `%USERPROFILE%\.dsh\profiles\desktop`。
+`dsh plugin --profile <配置名> <参数...>` 会把参数原样转发给该配置目录里的 pnpm，因此 `add`、`remove`、`install`、`why` 都可用。把下面命令里的 `desktop` 换成 `web`，就是给浏览器版安装。
 
 ```powershell
 # 首次安装或升级到新版本：按标签定位附件
 dsh plugin --profile desktop add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
+dsh plugin --profile web     add https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz
 
 # 重复安装或回退同一版本：先下载附件，再按本地文件安装（可反复执行）
-Invoke-WebRequest -Uri https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz -OutFile "$env:TEMP\dsh-wait-minute-1.0.2.tgz"
-dsh plugin --profile desktop add "file:$env:TEMP\dsh-wait-minute-1.0.2.tgz"
+Invoke-WebRequest -Uri https://github.com/TZDXF/dsh-wait-minute/releases/download/v1.0.2/dsh-wait-minute-1.0.2.tgz -OutFile "$env:LOCALAPPDATA\dsh-wait-minute\dsh-wait-minute-1.0.2.tgz"
+dsh plugin --profile desktop add "file:$env:LOCALAPPDATA\dsh-wait-minute\dsh-wait-minute-1.0.2.tgz"
 
 # 开发调试：直接从项目目录安装（link）
 dsh plugin --profile desktop add C:\code\wait-minute
@@ -74,7 +80,7 @@ dsh plugin --profile desktop why dsh-wait-minute
 dsh plugin --profile desktop remove dsh-wait-minute
 ```
 
-安装或更新后必须完全退出并重新打开 DSH，插件页显示的版本号不代表运行时已重新导入新代码。已经装好的配置只需 `dsh plugin --profile desktop install` 核对，正常输出 `Already up to date`。
+安装或更新后必须完全退出并重新打开：桌面应用要完全退出后重开，`dsh web` 要停掉原进程重新启动。插件页显示的版本号不代表运行时已重新导入新代码。已经装好的配置只需 `dsh plugin --profile <配置名> install` 核对，正常输出 `Already up to date`。
 
 **地址必须带版本标签，不要写成 `releases/latest/download/...`。** 附件文件名含版本号，`latest` 只在「文件名里的版本恰好就是当前最新版」时可用：本仓库现在 `latest/download/dsh-wait-minute-1.0.2.tgz` 返回 200，而 `latest/download/dsh-wait-minute-1.0.1.tgz` 直接 `ERR_PNPM_FETCH_404`。一旦发布 v1.0.3，任何写死 `latest/...1.0.2.tgz` 的命令都会失效；而没有版本号的固定地址又永远命中同一 specifier，`add`/`update` 都只回 `Already up to date`，无法升级。按标签取地址则两者都成立。
 

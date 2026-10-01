@@ -3,17 +3,17 @@
 请在打标签前更新本文件，使其描述该标签对应的版本；打标签后再改动不会影响已发布的正文。
 -->
 
-# Wait Minute 1.0.1
+# Wait Minute 1.0.2
 
 会话内的延迟发送功能：设置小时和分钟，消息保存到插件自己的持久化队列，到期后通过 DSH 普通会话发送接口提交原文。不调用 Schedule，不创建自动化任务，不发送 `[SCHEDULE REMINDER]` 包装。
 
 ## 本次更新
 
-- **补充 MIT 许可证文件**（[LICENSE](https://github.com/TZDXF/dsh-wait-minute/blob/master/LICENSE)），满足插件市场对开源许可证的要求；此前仅 `package.json` 声明了 `license: MIT`。
-- **运行版本号改为单一来源**：`X-Wait-Minute-Version` 与 `/.well-known/wait-minute` 回显的版本直接读取 `package.json`，发布时只需修改包版本，不会出现接口标识与包版本脱节。
-- 仓库添加 `dsh-plugin` 等话题，便于插件市场自动索引。
+- **补齐 npm 包元数据**：`repository`、`author`、`keywords`、`homepage`、`bugs`。安装包与 npm 页面现在能正确指向本仓库与作者，也便于通过关键词被发现。
+- **接口回显版本单一来源**（承 1.0.1）：`X-Wait-Minute-Version` 与 `/.well-known/wait-minute` 的版本直接读取 `package.json`。
+- 仓库已补充 MIT 许可证文件、`dsh-plugin` 话题与发布流水线；插件市场检查已全部通过。
 
-## 亮点（1.0.0 起的完整能力）
+## 亮点
 
 - **延迟发送**：在聊天输入框旁设置小时/分钟（如 `00:05`、`01:30`），随原发送按钮或 Enter 一起入队并显示倒计时。
 - **时间输入**：独立的时/分数字段，支持滚轮、`↑/↓` 调整与左右键切换；粘贴短格式与全角冒号自动规范化，最短延迟 1 分钟。
@@ -27,7 +27,7 @@
 
 适用于已检查的 **DSH 0.2.0-rc.2**，不再依赖 Schedule bundle。
 
-在 DSH 插件安装入口选择本 Release 附件中的 `dsh-wait-minute-1.0.1.tgz`，或输入项目绝对目录（例如 `C:\code\wait-minute`）。安装包已包含客户端构建产物，无需第三方安装脚本。如果安装工具返回 `restart-required`，必须完全退出并重新打开 DSH，不能只刷新网页。
+在 DSH 插件安装入口选择本 Release 附件中的 `dsh-wait-minute-1.0.2.tgz`，或输入项目绝对目录（例如 `C:\code\wait-minute`）。安装包已包含客户端构建产物，无需第三方安装脚本。如果安装工具返回 `restart-required`，必须完全退出并重新打开 DSH，不能只刷新网页。
 
 启动后可访问只读的 `GET /.well-known/wait-minute` 核验引擎标识与运行版本，该响应只包含引擎、版本与 `ready` 状态。
 

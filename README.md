@@ -1,4 +1,4 @@
-# Wait Minute — 会话延迟消息队列（1.0.1）
+# Wait Minute — 会话延迟消息队列（1.0.2）
 
 这是会话内的延迟发送功能，不是单次自动化任务。消息保存到插件自己的持久化队列，到期后通过 DSH 普通会话发送接口提交原始文本。
 
@@ -50,7 +50,7 @@
 
 独立队列改用 `/api/wait-minute/outbox-v1`，不回退到旧接口。响应包含 `X-Wait-Minute-Engine: standalone-outbox-v1` 和运行版本标识。客户端在任何修改前先做只读校验；旧实现、缺失标识或错误路径将被阻止，不继续创建消息或自动化任务。实际验证必须检查运行接口标识，不能仅查看源码或 bundle 版本。
 
-在 DSH 插件安装入口选择最新 Release 的附件 `dsh-wait-minute-<版本>.tgz`（当前为 `dsh-wait-minute-1.0.1.tgz`），或输入项目绝对目录（例如 `C:\code\wait-minute`）。如果安装工具返回 `restart-required`，必须完全退出并重新打开 DSH，不能只刷新网页。安装包包含客户端构建产物，无需第三方安装脚本。
+在 DSH 插件安装入口选择最新 Release 的附件 `dsh-wait-minute-<版本>.tgz`（当前为 `dsh-wait-minute-1.0.2.tgz`），或输入项目绝对目录（例如 `C:\code\wait-minute`）。如果安装工具返回 `restart-required`，必须完全退出并重新打开 DSH，不能只刷新网页。安装包包含客户端构建产物，无需第三方安装脚本。
 
 启动成功后，`GET /.well-known/wait-minute` 返回只读的引擎、运行版本和 `ready: true`，不包含消息、会话、令牌或其他私有信息。该端点在两个存储单元成功打开后才注册，可用于真实启动核验。私有 `/api` 请求会先被统一身份认证拦截，未经认证的 401 不能证明某条路由存在或后端版本已更新。
 
@@ -94,7 +94,7 @@ node --test test/*.test.mjs
 - [package.yml](.github/workflows/package.yml)：手动触发，只打包并上传 tgz，用于打标签前验证安装包。
 - Release 附件即安装包；发布说明取自标签对应提交的 [RELEASENOTES.md](RELEASENOTES.md)，自动生成的提交列表追加在其后。
 
-标签与 `package.json` 的 `version` 必须一致（`v1.0.1` ↔ `1.0.1`），标签提交还必须位于 `master` 历史中；否则发布在构建前失败，且不产生 Release。接口回显的运行版本号直接读取 `package.json`，因此发布时只需修改包版本。完整步骤、版本号规则与失败处理见 [.github/RELEASE.md](.github/RELEASE.md)。
+标签与 `package.json` 的 `version` 必须一致（`v1.0.2` ↔ `1.0.2`），标签提交还必须位于 `master` 历史中；否则发布在构建前失败，且不产生 Release。接口回显的运行版本号直接读取 `package.json`，因此发布时只需修改包版本。完整步骤、版本号规则与失败处理见 [.github/RELEASE.md](.github/RELEASE.md)。
 
 ## 许可证
 

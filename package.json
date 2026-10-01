@@ -1,7 +1,12 @@
 {
   "name": "dsh-wait-minute",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DSH 延迟发送消息：设置小时和分钟，持久化定时投递到当前会话",
+  "keywords": ["dsh", "dsh-plugin", "deepseek", "delay", "scheduled-message", "message-queue"],
+  "homepage": "https://github.com/TZDXF/dsh-wait-minute#readme",
+  "bugs": { "url": "https://github.com/TZDXF/dsh-wait-minute/issues" },
+  "repository": { "type": "git", "url": "git+https://github.com/TZDXF/dsh-wait-minute.git" },
+  "author": { "name": "TZDXF", "url": "https://github.com/TZDXF" },
   "type": "module",
   "license": "MIT",
   "main": "src/index.js",
